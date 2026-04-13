@@ -61,7 +61,7 @@ python qwen-stats-tracker.py --project obsidian
 python qwen-stats-tracker.py --help
 ```
 
-Автообнаружение найдёт все проекты в `.qwen/projects/`. Для удобных имён используется словарь алиасов (schedule-bot, obsidian, satella, gleb7-home).
+Автообнаружение найдёт все проекты в `.qwen/projects/`. Для удобных имён используется словарь алиасов (schedule-bot, obsidian, satella).
 
 ## Формат вывода
 
@@ -106,7 +106,6 @@ python qwen-stats-tracker.py --help
 - `schedule-bot` → `c--users-gleb7-onedrive--------------vibecoding-projects-schedule-bot-main-codexnew`
 - `obsidian` → `c--users-gleb7-onedrive--------------vibecoding-obsidian`
 - `satella` → `c--users-gleb7-onedrive--------------vibecoding-projects-satella`
-- `gleb7-home` → `C--Users-gleb7`
 
 Новые проекты автоматически обнаруживаются по их sanitised имени папки.
 
@@ -117,29 +116,6 @@ python qwen-stats-tracker.py --help
 - **API Responses** — запросы к модели, токены, cache
 - **Tool Calls** — вызовы инструментов, успешность, длительность
 - **Временные метки** — wall time, agent active time
-
-## Данные по проектам (пример за 12 апреля 2026)
-
-### schedule-bot-main_codexnew
-- Сессий: 15
-- Tool Calls: 1272
-- Success Rate: 95.6%
-- Input Tokens: ~103M
-- Cache: 94.8%
-
-### Obsidian
-- Сессий: 15
-- Tool Calls: 1537
-- Success Rate: 90.2%
-- Input Tokens: ~79M
-- Cache: 87.1%
-
-### Все проекты вместе
-- Сессий: 32
-- Tool Calls: 3130
-- Success Rate: 95.6%
-- Input Tokens: ~201M
-- Cache: 91.0%
 
 ## Лицензия
 
