@@ -108,41 +108,24 @@ def parse_session_file(filepath: str) -> Dict[str, Any]:
                         else:
                             stats["tool_stats"][tool_name]["fail"] += 1
 
-                # Code changes - ищем в assistant сообщениях
-                elif record.get("type") == "assistant":
-                    message = record.get("message", {})
-                    parts = message.get("parts", [])
-                    for part in parts:
-                        if "functionCall" in part:
-                            func = part["functionCall"]
-                            if func.get("name") in ["write_file", "edit"]:
-                                # Сохраняем информацию о вызове функции
-                                pass
-                
                 # Code changes - из tool_result с diff
-                elif record.get("type") == "system" and record.get("subtype") == "tool_result":
-                    payload = record.get("systemPayload", {})
-                    tool_name = payload.get("tool_name", "")
-                    
-                    # Проверяем diff в display
-                    if tool_name in ["write_file", "edit"]:
-                        display = payload.get("display", {})
-                        if isinstance(display, dict):
-                            diff_stat = display.get("diffStat", {})
-                            if diff_stat:
-                                stats["code_changes"]["added"] += diff_stat.get("model_added_lines", 0)
-                                stats["code_changes"]["removed"] += diff_stat.get("model_removed_lines", 0)
+                elif record.get("type") == "tool_result":
+                    # Путь 1: message.parts[0].functionResponse.name
+                    parts = record.get("message", {}).get("parts", [])
+                    if parts:
+                        func_response = parts[0].get("functionResponse", {})
+                        tool_name = func_response.get("name", "")
                         
-                        # Также проверяем content на наличие diff
-                        content = payload.get("content", "")
-                        if isinstance(content, str) and "---" in content and "+++" in content:
-                            # Простой подсчет строк
-                            lines = content.split('\n')
-                            for line in lines:
-                                if line.startswith('+') and not line.startswith('+++'):
-                                    stats["code_changes"]["added"] += 1
-                                elif line.startswith('-') and not line.startswith('---'):
-                                    stats["code_changes"]["removed"] += 1
+                        if tool_name in ["write_file", "edit"]:
+                            # Путь 2: toolCallResult.resultDisplay.diffStat
+                            tool_result = record.get("toolCallResult", {})
+                            result_display = tool_result.get("resultDisplay", {})
+                            
+                            if isinstance(result_display, dict):
+                                diff_stat = result_display.get("diffStat", {})
+                                if diff_stat:
+                                    stats["code_changes"]["added"] += diff_stat.get("model_added_lines", 0)
+                                    stats["code_changes"]["removed"] += diff_stat.get("model_removed_lines", 0)
 
     except Exception as e:
         print(f"Ошибка при чтении {filepath}: {e}", file=sys.stderr)
@@ -339,6 +322,10 @@ def main():
                 print(f"  - {name}")
             sys.exit(1)
 
+    date_range = start_date
+    if end_date:
+        date_range = f"{start_date} — {end_date}"
+
     total_aggregated = None
 
     for project_name, chats_dir in projects_to_analyze.items():
@@ -364,12 +351,13 @@ def main():
         if not sessions:
             continue
 
-        date_range = start_date
-        if end_date:
-            date_range = f"{start_date} — {end_date}"
-
         # Агрегируем и выводим
         aggregated = aggregate_stats(sessions)
+
+        # Пропускаем проекты с нулевой активностью
+        if aggregated["total_tool_calls"] == 0 and aggregated["total_requests"] == 0:
+            continue
+
         print_stats(aggregated, project_name, date_range)
 
         # Суммируем для общей статистики
