@@ -25,10 +25,16 @@ def sanitize_to_name(sanitized: str) -> str:
     parts = sanitized.split("-")
     skip = {"c", "users", "onedrive", "", "vibecoding", "projects", "desktop", "рабочий", "стол"}
     filtered = [p for p in parts if p.lower() not in skip]
-    if filtered:
-        # Берём последнюю часть (имя проекта)
-        return filtered[-1]
-    return sanitized
+    
+    if not filtered:
+        return sanitized
+    
+    # Для домашних директорий (C--Users-username) берём "username-home"
+    if len(filtered) == 1 and filtered[0].lower() not in ["obsidian", "satella", "schedule", "codexnew"]:
+        return f"{filtered[0]}-home"
+    
+    # Для остальных берём последнюю значимую часть
+    return filtered[-1]
 
 
 def discover_projects() -> Dict[str, str]:
