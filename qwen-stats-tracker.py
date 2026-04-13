@@ -14,15 +14,21 @@ from collections import defaultdict
 from typing import Dict, List, Any, Tuple
 
 # Базовая директория с проектами Qwen Code
-QWEN_PROJECTS_DIR = r"C:\Users\gleb7\.qwen\projects"
+# Определяется автоматически из домашней директории пользователя
+USER_HOME = os.path.expanduser("~")
+QWEN_PROJECTS_DIR = os.path.join(USER_HOME, ".qwen", "projects")
 
-# Алиасы для удобного именования (опционально)
-PROJECT_ALIASES = {
-    "schedule-bot": "c--users-gleb7-onedrive--------------vibecoding-projects-schedule-bot-main-codexnew",
-    "obsidian": "c--users-gleb7-onedrive--------------vibecoding-obsidian",
-    "satella": "c--users-gleb7-onedrive--------------vibecoding-projects-satella",
-    "gleb7-home": "C--Users-gleb7",
-}
+
+def sanitize_to_name(sanitized: str) -> str:
+    """Преобразует sanitised имя папки в короткое читаемое"""
+    # Разбиваем по разделителям и убираем системные части
+    parts = sanitized.split("-")
+    skip = {"c", "users", "onedrive", "", "vibecoding", "projects", "desktop", "рабочий", "стол"}
+    filtered = [p for p in parts if p.lower() not in skip]
+    if filtered:
+        # Берём последнюю часть (имя проекта)
+        return filtered[-1]
+    return sanitized
 
 
 def discover_projects() -> Dict[str, str]:
@@ -38,14 +44,9 @@ def discover_projects() -> Dict[str, str]:
         chats_dir = os.path.join(project_path, "chats")
         
         if os.path.isdir(project_path) and os.path.exists(chats_dir):
-            # Проверяем алиас для удобного имени
-            alias = None
-            for name, sanitized in PROJECT_ALIASES.items():
-                if sanitized.lower() == project_dir.lower():
-                    alias = name
-                    break
-            
-            projects[alias or project_dir] = chats_dir
+            # Автоматически генерируем короткое имя из sanitised пути
+            short_name = sanitize_to_name(project_dir)
+            projects[short_name] = chats_dir
     
     return projects
 
